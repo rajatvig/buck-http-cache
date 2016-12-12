@@ -2,8 +2,6 @@ package com.uber.buckcache.datastore;
 
 import javax.annotation.Nonnull;
 
-import org.apache.commons.lang3.builder.ToStringBuilder;
-
 /**
  * An entry in the build cache.
  */

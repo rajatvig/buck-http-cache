@@ -6,13 +6,11 @@ import static com.uber.buckcache.utils.MetricsRegistry.IGNITE_CACHE_PUT_CALL_COU
 import static com.uber.buckcache.utils.MetricsRegistry.IGNITE_CACHE_PUT_CALL_TIME;
 
 import java.io.IOException;
-
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 import javax.cache.expiry.ExpiryPolicy;
-import org.slf4j.Logger;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheck.Result;
@@ -24,10 +22,12 @@ import com.uber.buckcache.datastore.DataStoreProvider;
 import com.uber.buckcache.datastore.DataStoreProviderConfig;
 import com.uber.buckcache.datastore.exceptions.EntryNotFoundException;
 import com.uber.buckcache.utils.StatsDClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class IgniteDataStoreProvider implements DataStoreProvider {
   private static final ObjectMapper om = new ObjectMapper();
-  private static final Logger logger = org.slf4j.LoggerFactory.getLogger(IgniteDataStoreProvider.class);
+  private static final Logger logger = LoggerFactory.getLogger(IgniteDataStoreProvider.class);
 
   private CacheInstanceMode mode;
   private DataStoreProviderConfig cacheProviderConfig;
