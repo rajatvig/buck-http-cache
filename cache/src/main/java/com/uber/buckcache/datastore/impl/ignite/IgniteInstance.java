@@ -13,8 +13,11 @@ import static com.uber.buckcache.utils.MetricsRegistry.OFF_HEAP_TIME;
 import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import javax.cache.expiry.ExpiryPolicy;
+
+import com.uber.buckcache.CacheInstanceMode;
+import com.uber.buckcache.IgniteConfig;
+import com.uber.buckcache.utils.StatsDClient;
 import org.apache.ignite.Ignite;
 import org.apache.ignite.IgniteAtomicSequence;
 import org.apache.ignite.IgniteCache;
@@ -26,15 +29,9 @@ import org.apache.ignite.events.EventType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.uber.buckcache.CacheInstanceMode;
-import com.uber.buckcache.IgniteConfig;
-import com.uber.buckcache.utils.StatsDClient;
-
-public class IgniteInstance {
+class IgniteInstance {
   private static final Logger logger = LoggerFactory.getLogger(IgniteInstance.class);
   private static final int TEN_SECONDS = 10 * 1000;
-  private final IgniteConfig config;
-  private final IgniteConfiguration igniteConfiguration;
   private final Ignite ignite;
 
   private final IgniteAtomicSequence atomicSequence;
@@ -43,14 +40,13 @@ public class IgniteInstance {
   private final IgniteCache<Long, byte[]> buckDataCache;
   private final Timer timer = new Timer("ignite_metrics_reporter");
 
-  public IgniteInstance(CacheInstanceMode mode, IgniteConfig config) {
-    this.config = config;
-    this.igniteConfiguration = new IgniteConfigurationBuilder()
-        .addMulticastBasedDiscrovery(this.config.getMulticastIP(), this.config.getMulticastPort(),
-            this.config.getHostIPs(), this.config.getDnsLookupAddress())
-        .addCacheConfiguration(this.config.getCacheMode(), this.config.getCacheBackupCount(),
-            this.config.getExpirationTimeUnit(), this.config.getExpirationTimeValue(),
-            this.config.getOffHeapStorageSize(), KEYS_CACHE_NAME, KEYS_REVERSE_CACHE_NAME, METADATA_CACHE_NAME)
+  IgniteInstance(CacheInstanceMode mode, IgniteConfig config) {
+    IgniteConfiguration igniteConfiguration = new IgniteConfigurationBuilder()
+        .addMulticastBasedDiscovery(config.getMulticastIP(), config.getMulticastPort(),
+            config.getHostIPs(), config.getDnsLookupAddress())
+        .addCacheConfiguration(config.getCacheMode(), config.getCacheBackupCount(),
+            config.getExpirationTimeUnit(), config.getExpirationTimeValue(),
+            config.getOffHeapStorageSize(), KEYS_CACHE_NAME, KEYS_REVERSE_CACHE_NAME, METADATA_CACHE_NAME)
         .addAtomicSequenceConfig(config.getAtomicSequencereserveSize()).build();
 
     logger.info("isClientMode : {}", mode == CacheInstanceMode.CLIENT);
@@ -66,7 +62,7 @@ public class IgniteInstance {
         EventType.EVT_CACHE_OBJECT_EXPIRED, EventType.EVT_CACHE_OBJECT_REMOVED);
   }
 
-  public void start() {
+  void start() {
     timer.scheduleAtFixedRate(new TimerTask() {
 
       @Override
@@ -76,56 +72,36 @@ public class IgniteInstance {
     }, TEN_SECONDS, TEN_SECONDS);
   }
 
-  public void stop() {
+  void stop() {
     timer.cancel();
     Ignition.stop(ignite.name(), false);
   }
 
-  public IgniteCache<String, Long> getCacheKeys() {
+  IgniteCache<String, Long> getCacheKeys() {
     return cacheKeys;
   }
 
-  public IgniteCache<Long, String[]> getReverseCacheKeys() {
-    return reverseCacheKeys;
-  }
-
-  public IgniteCache<Long, byte[]> getBuckDataCache() {
+  IgniteCache<Long, byte[]> getBuckDataCache() {
     return buckDataCache;
   }
 
-  public IgniteCache<String, Long> getCacheKeys(Optional<ExpiryPolicy> policy) {
-    if (policy.isPresent()) {
-      return cacheKeys.withExpiryPolicy(policy.get());
-    } else {
-      return cacheKeys;
-    }
+  IgniteCache<String, Long> getCacheKeys(Optional<ExpiryPolicy> policy) {
+    return policy.map(cacheKeys::withExpiryPolicy).orElse(cacheKeys);
   }
 
-  public IgniteCache<Long, String[]> getReverseCacheKeys(Optional<ExpiryPolicy> policy) {
-    if (policy.isPresent()) {
-      return reverseCacheKeys.withExpiryPolicy(policy.get());
-    } else {
-      return reverseCacheKeys;
-    }
+  IgniteCache<Long, String[]> getReverseCacheKeys(Optional<ExpiryPolicy> policy) {
+    return policy.map(reverseCacheKeys::withExpiryPolicy).orElse(reverseCacheKeys);
   }
 
-  public IgniteCache<Long, byte[]> getBuckDataCache(Optional<ExpiryPolicy> policy) {
-    if (policy.isPresent()) {
-      return buckDataCache.withExpiryPolicy(policy.get());
-    } else {
-      return buckDataCache;
-    }
+  IgniteCache<Long, byte[]> getBuckDataCache(Optional<ExpiryPolicy> policy) {
+    return policy.map(buckDataCache::withExpiryPolicy).orElse(buckDataCache);
   }
 
-  public IgniteAtomicSequence getAtomicSequence() {
+  IgniteAtomicSequence getAtomicSequence() {
     return atomicSequence;
   }
 
-  public Ignite getIgnite() {
-    return ignite.cluster().ignite();
-  }
-
-  public void reportMetrics() {
+  private void reportMetrics() {
     // TODO: check and make sure that these are not costly to compute
     ClusterNode thisNode = ignite.cluster().localNode();
     ClusterMetrics metrics = thisNode.metrics();

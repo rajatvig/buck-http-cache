@@ -9,14 +9,14 @@ import org.apache.ignite.lang.IgnitePredicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LocalCacheEventListener implements IgnitePredicate<CacheEvent> {
+class LocalCacheEventListener implements IgnitePredicate<CacheEvent> {
   private static Logger logger = LoggerFactory.getLogger(LocalCacheEventListener.class);
 
   private final IgniteCache<Long, byte[]> metadataCache;
   private final IgniteCache<Long, String[]> reverseCacheKeys;
   private final IgniteCache<String, Long> cacheKeys;
 
-  public LocalCacheEventListener(IgniteCache<Long, byte[]> metadataCache, IgniteCache<Long, String[]> reverseCacheKeys,
+  LocalCacheEventListener(IgniteCache<Long, byte[]> metadataCache, IgniteCache<Long, String[]> reverseCacheKeys,
       IgniteCache<String, Long> cacheKeys) {
     this.metadataCache = metadataCache;
     this.reverseCacheKeys = reverseCacheKeys;
