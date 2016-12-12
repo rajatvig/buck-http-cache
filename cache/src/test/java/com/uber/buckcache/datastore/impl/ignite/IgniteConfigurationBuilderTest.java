@@ -1,28 +1,27 @@
 package com.uber.buckcache.datastore.impl.ignite;
 
-import com.spotify.dns.DnsSrvResolver;
-import com.spotify.dns.LookupResult;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import com.spotify.dns.DnsSrvResolver;
+import com.spotify.dns.LookupResult;
 import org.apache.ignite.configuration.IgniteConfiguration;
 import org.apache.ignite.spi.discovery.tcp.TcpDiscoverySpi;
 import org.junit.Assert;
 import org.junit.Test;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 public class IgniteConfigurationBuilderTest {
-
-  private static IgniteConfigurationBuilder builder;
 
   @Test
   public void testAddMulticastBasedDiscroveryWithoutDNSLookup() throws Exception {
-    IgniteConfiguration configuration = builder.addMulticastBasedDiscrovery(
+    IgniteConfigurationBuilder builder = new IgniteConfigurationBuilder();
+    IgniteConfiguration configuration = builder.addMulticastBasedDiscovery(
         "",
         0,
         Arrays.asList("127.0.0.2"),
@@ -40,12 +39,12 @@ public class IgniteConfigurationBuilderTest {
     mockAddress.add(LookupResult.create("127.0.0.4", 1001, 0, 0, 15));
     DnsSrvResolver resolver = mock(DnsSrvResolver.class);
     when(resolver.resolve("testDNSAddress")).thenReturn(mockAddress);
-    builder = new IgniteConfigurationBuilder(resolver);
+    IgniteConfigurationBuilder builder = new IgniteConfigurationBuilder(resolver);
 
-    IgniteConfiguration configuration = builder.addMulticastBasedDiscrovery(
+    IgniteConfiguration configuration = builder.addMulticastBasedDiscovery(
         "",
         0,
-        new ArrayList<String>(Arrays.asList("127.0.0.2")),
+        Arrays.asList("127.0.0.2"),
         "testDNSAddress").build();
 
     TcpDiscoverySpi spi = (TcpDiscoverySpi) configuration.getDiscoverySpi();
