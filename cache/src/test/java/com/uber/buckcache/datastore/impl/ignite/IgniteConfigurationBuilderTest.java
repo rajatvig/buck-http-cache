@@ -44,7 +44,7 @@ public class IgniteConfigurationBuilderTest {
     IgniteConfiguration configuration = builder.addMulticastBasedDiscovery(
         "",
         0,
-        Arrays.asList("127.0.0.2"),
+        new ArrayList<>(Arrays.asList("127.0.0.2")),
         "testDNSAddress").build();
 
     TcpDiscoverySpi spi = (TcpDiscoverySpi) configuration.getDiscoverySpi();
